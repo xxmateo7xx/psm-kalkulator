@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -21,56 +22,80 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
+private val CustomLightScheme = lightColorScheme(
+    primary = Color(0xFF4F46E5),
+    secondary = Color(0xFFF59E0B),
+    tertiary = Color(0xFF6B7280),
+    surface = Color(0xFF38BDF8),
+    background = Color(0xFFF1F5F9),
+    onSurface = Color(0xFF0F172A)
+)
+
+private val CustomDarkScheme = darkColorScheme(
+    primary = Color(0xFF6366F1),
+    secondary = Color(0xFFF59E0B),
+    tertiary = Color(0xFF374151),
+    surface = Color(0xFF0284C7),
+    background = Color(0xFF0F172A),
+    onSurface = Color(0xFFF8FAFC)
+)
+
+enum class ButtonType { NUMBER, OPERATOR, SCIENTIFIC, ACTION }
+
+data class CalcButton(
+    val label: String,
+    val textToInsert: String = label,
+    val type: ButtonType = ButtonType.NUMBER
+)
+
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
-            Surface(
-                modifier = Modifier.fillMaxSize(),
-                color = Color.White
-            ) {
-                KalkulatorApp()
+            val isDark = isSystemInDarkTheme()
+            val colors = if (isDark) CustomDarkScheme else CustomLightScheme
+
+            MaterialTheme(colorScheme = colors) {
+                Surface(
+                    modifier = Modifier.fillMaxSize(),
+                    color = MaterialTheme.colorScheme.background
+                ) {
+                    KalkulatorApp()
+                }
             }
         }
     }
 }
 
-data class CalcButton(
-    val label: String,
-    val textToInsert: String = label
-)
-
 @Composable
 fun KalkulatorApp() {
     var displayExpression by rememberSaveable { mutableStateOf("") }
 
-    // Wykrywanie aktualnej orientacji ekranu
     val configuration = LocalConfiguration.current
     val isLandscape = configuration.orientation == Configuration.ORIENTATION_LANDSCAPE
+    val isDark = isSystemInDarkTheme()
 
-    // Siatka podstawowa (4 kolumny)
     val basicButtons = listOf(
-        listOf(CalcButton("AC"), CalcButton("C"), CalcButton("("), CalcButton(")")),
-        listOf(CalcButton("7"), CalcButton("8"), CalcButton("9"), CalcButton("/")),
-        listOf(CalcButton("4"), CalcButton("5"), CalcButton("6"), CalcButton("*")),
-        listOf(CalcButton("1"), CalcButton("2"), CalcButton("3"), CalcButton("-")),
-        listOf(CalcButton("0"), CalcButton(","), CalcButton("="), CalcButton("+"))
+        listOf(CalcButton("AC", type = ButtonType.ACTION), CalcButton("C", type = ButtonType.ACTION), CalcButton("(", type = ButtonType.OPERATOR), CalcButton(")", type = ButtonType.OPERATOR)),
+        listOf(CalcButton("7"), CalcButton("8"), CalcButton("9"), CalcButton("/", type = ButtonType.OPERATOR)),
+        listOf(CalcButton("4"), CalcButton("5"), CalcButton("6"), CalcButton("*", type = ButtonType.OPERATOR)),
+        listOf(CalcButton("1"), CalcButton("2"), CalcButton("3"), CalcButton("-", type = ButtonType.OPERATOR)),
+        listOf(CalcButton("0"), CalcButton(","), CalcButton("=", type = ButtonType.OPERATOR), CalcButton("+", type = ButtonType.OPERATOR))
     )
 
-    // Siatka naukowa (2 kolumny - pokazywana tylko w poziomie)
     val scientificButtons = listOf(
-        listOf(CalcButton("sin", "sin("), CalcButton("cos", "cos(")),
-        listOf(CalcButton("tan", "tan("), CalcButton("ln", "ln(")),
-        listOf(CalcButton("log", "log("), CalcButton("√", "√(")),
-        listOf(CalcButton("x²", "^2"), CalcButton("xⁿ", "^")),
-        listOf(CalcButton("π", "π"), CalcButton("e", "e"))
+        listOf(CalcButton("sin", "sin(", ButtonType.SCIENTIFIC), CalcButton("cos", "cos(", ButtonType.SCIENTIFIC)),
+        listOf(CalcButton("tan", "tan(", ButtonType.SCIENTIFIC), CalcButton("ln", "ln(", ButtonType.SCIENTIFIC)),
+        listOf(CalcButton("log", "log(", ButtonType.SCIENTIFIC), CalcButton("√", "√(", ButtonType.SCIENTIFIC)),
+        listOf(CalcButton("x²", "^2", ButtonType.SCIENTIFIC), CalcButton("xⁿ", "^", ButtonType.SCIENTIFIC)),
+        listOf(CalcButton("π", "π", ButtonType.SCIENTIFIC), CalcButton("e", "e", ButtonType.SCIENTIFIC))
     )
 
     val onButtonClick: (CalcButton) -> Unit = { btn ->
         when (btn.label) {
             "AC" -> displayExpression = ""
             "C" -> if (displayExpression.isNotEmpty()) displayExpression = displayExpression.dropLast(1)
-            "=" -> { /* Obliczenia w Lab 5 */ }
+            "=" -> { }
             else -> displayExpression += btn.textToInsert
         }
     }
@@ -80,12 +105,11 @@ fun KalkulatorApp() {
             .fillMaxSize()
             .padding(12.dp)
     ) {
-        // 1. POLE DZIAŁANIA
         Box(
             modifier = Modifier
                 .fillMaxWidth()
                 .weight(if (isLandscape) 0.25f else 0.3f)
-                .background(Color(0xFFEEEEEE), RoundedCornerShape(16.dp))
+                .background(if (isDark) Color(0xFF1E293B) else Color.White, RoundedCornerShape(16.dp))
                 .padding(16.dp),
             contentAlignment = Alignment.BottomEnd
         ) {
@@ -93,7 +117,7 @@ fun KalkulatorApp() {
                 text = if (displayExpression.isEmpty()) "0" else displayExpression,
                 fontSize = if (isLandscape) 26.sp else 36.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color.Black,
+                color = if (isDark) Color.White else Color.Black,
                 textAlign = TextAlign.End,
                 maxLines = 1,
                 modifier = Modifier.horizontalScroll(rememberScrollState())
@@ -102,10 +126,8 @@ fun KalkulatorApp() {
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        // 2. SIATKA PRZYCISKÓW (zależna od orientacji)
         Box(modifier = Modifier.weight(if (isLandscape) 0.75f else 0.7f)) {
             if (isLandscape) {
-                // Poziom: blok naukowy po lewej (40% szerokości), blok podstawowy po prawej (60%)
                 Row(
                     modifier = Modifier.fillMaxSize(),
                     horizontalArrangement = Arrangement.spacedBy(8.dp)
@@ -118,14 +140,12 @@ fun KalkulatorApp() {
                     }
                 }
             } else {
-                // Pion: tylko blok podstawowy
                 ButtonGrid(grid = basicButtons, onClick = onButtonClick)
             }
         }
     }
 }
 
-// Wielokrotnie używalny komponent siatki przycisków
 @Composable
 fun ButtonGrid(grid: List<List<CalcButton>>, onClick: (CalcButton) -> Unit) {
     Column(
@@ -140,6 +160,13 @@ fun ButtonGrid(grid: List<List<CalcButton>>, onClick: (CalcButton) -> Unit) {
                 horizontalArrangement = Arrangement.spacedBy(6.dp)
             ) {
                 for (btn in row) {
+                    val containerColor = when (btn.type) {
+                        ButtonType.NUMBER -> MaterialTheme.colorScheme.surface
+                        ButtonType.OPERATOR -> MaterialTheme.colorScheme.secondary
+                        ButtonType.SCIENTIFIC -> MaterialTheme.colorScheme.tertiary
+                        ButtonType.ACTION -> MaterialTheme.colorScheme.primary
+                    }
+
                     Button(
                         onClick = { onClick(btn) },
                         modifier = Modifier
@@ -147,8 +174,8 @@ fun ButtonGrid(grid: List<List<CalcButton>>, onClick: (CalcButton) -> Unit) {
                             .fillMaxHeight(),
                         shape = RoundedCornerShape(12.dp),
                         colors = ButtonDefaults.buttonColors(
-                            containerColor = Color(0xFFDDDDDD),
-                            contentColor = Color.Black
+                            containerColor = containerColor,
+                            contentColor = Color.White
                         )
                     ) {
                         Text(
