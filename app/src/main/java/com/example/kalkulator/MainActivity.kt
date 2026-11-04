@@ -22,6 +22,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import org.mariuszgromada.math.mxparser.Expression
+import org.mariuszgromada.math.mxparser.License
 
 private val CustomLightScheme = lightColorScheme(
     primary = Color(0xFF4F46E5),
@@ -54,6 +56,8 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
+        License.iConfirmNonCommercialUse("Mateusz Padło")
+
         savedInstanceState?.let { bundle ->
             Log.d("Lab5_State", "onCreate: Odtworzono stan z Bundle = $bundle")
         }
@@ -76,6 +80,28 @@ class MainActivity : ComponentActivity() {
     override fun onSaveInstanceState(outState: Bundle) {
         super.onSaveInstanceState(outState)
         Log.d("Lab5_State", "onSaveInstanceState wywołane. Zawartość Bundle: $outState")
+    }
+}
+
+fun calculateResult(expressionStr: String): String {
+    if (expressionStr.isEmpty()) return "0"
+
+    var formatted = expressionStr
+        .replace(",", ".")
+        .replace("√", "sqrt")
+        .replace("π", "pi")
+
+    val expression = Expression(formatted)
+    val result = expression.calculate()
+
+    return if (result.isNaN()) {
+        "Błąd"
+    } else {
+        if (result % 1.0 == 0.0) {
+            result.toLong().toString()
+        } else {
+            result.toString().replace(".", ",")
+        }
     }
 }
 
@@ -107,7 +133,9 @@ fun KalkulatorApp() {
         when (btn.label) {
             "AC" -> displayExpression = ""
             "C" -> if (displayExpression.isNotEmpty()) displayExpression = displayExpression.dropLast(1)
-            "=" -> { }
+            "=" -> {
+                displayExpression = calculateResult(displayExpression)
+            }
             else -> displayExpression += btn.textToInsert
         }
     }
