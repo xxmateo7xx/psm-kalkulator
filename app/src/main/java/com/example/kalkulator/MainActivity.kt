@@ -90,6 +90,13 @@ fun calculateResult(expressionStr: String): String {
         .replace(",", ".")
         .replace("√", "sqrt")
         .replace("π", "pi")
+        .replace("log(", "log10(")
+
+    val openCount = formatted.count { it == '(' }
+    val closeCount = formatted.count { it == ')' }
+    if (openCount > closeCount) {
+        formatted += ")".repeat(openCount - closeCount)
+    }
 
     val expression = Expression(formatted)
     val result = expression.calculate()
