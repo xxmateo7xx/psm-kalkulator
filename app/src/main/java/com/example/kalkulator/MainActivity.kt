@@ -2,6 +2,7 @@ package com.example.kalkulator
 
 import android.content.res.Configuration
 import android.os.Bundle
+import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.background
@@ -49,8 +50,14 @@ data class CalcButton(
 )
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        savedInstanceState?.let { bundle ->
+            Log.d("Lab5_State", "onCreate: Odtworzono stan z Bundle = $bundle")
+        }
+
         setContent {
             val isDark = isSystemInDarkTheme()
             val colors = if (isDark) CustomDarkScheme else CustomLightScheme
@@ -64,6 +71,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        Log.d("Lab5_State", "onSaveInstanceState wywołane. Zawartość Bundle: $outState")
     }
 }
 
