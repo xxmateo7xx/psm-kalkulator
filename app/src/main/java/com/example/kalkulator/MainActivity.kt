@@ -86,6 +86,8 @@ class MainActivity : ComponentActivity() {
 fun calculateResult(expressionStr: String): String {
     if (expressionStr.isEmpty()) return "0"
 
+    if (expressionStr.trim().lastOrNull() in listOf('+', '-', '*', '/', '^')) return "Błąd"
+
     var formatted = expressionStr
         .replace(",", ".")
         .replace("√", "sqrt")
